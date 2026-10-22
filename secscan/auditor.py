@@ -1,7 +1,6 @@
 import socket
 import ssl
 import datetime
-from urllib.parse import urlparse
 from typing import Dict, Any, List
 
 HEADER_CHECKS = [
@@ -69,7 +68,10 @@ def audit_ssl(hostname: str, port: int = 443) -> Dict[str, Any]:
                 not_after_str = cert.get("notAfter")
                 if not_after_str:
                     not_after = datetime.datetime.strptime(not_after_str, "%b %d %H:%M:%S %Y %Z")
-                    days_left = (not_after - datetime.datetime.utcnow()).days
+                    # Use timezone-aware UTC to avoid DeprecationWarning on Python 3.12+
+                    not_after = not_after.replace(tzinfo=datetime.timezone.utc)
+                    now_utc = datetime.datetime.now(datetime.timezone.utc)
+                    days_left = (not_after - now_utc).days
                 else:
                     days_left = 0
 
